@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PATIENT
+  ADMIN
+}
+
+enum ScanType {
+  MAMMOGRAM
+  ULTRASOUND
+  PATHOLOGY
+  LAB_REPORT
+  UNKNOWN
+}
+
+enum ScanStatus {
+  UPLOADED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  UNABLE_TO_ASSESS
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  HEALTH_DATA
+  MARKETING
+}
+
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model User {
+  id                    String              @id @default(uuid())
+  email                 String              @unique
+  phone                 String?             @unique
+  passwordHash          String
+  role                  Role                @default(PATIENT)
+  emailVerifiedAt       DateTime?
+  twoFactorSecret       String? // encrypted
+  twoFactorEnabledAt    DateTime?
+  failedLoginCount      Int                 @default(0)
+  lockedUntil           DateTime?
+  onboardingCompletedAt DateTime?
+  emailNotifications    Boolean             @default(true)
+  lastLoginAt           DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime? // deletion requested; hard-deleted after the grace period
+  profile               PatientProfile?
+  scans                 Scan[]
+  consents              Consent[]
+  sessions              Session[]
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  verificationTokens    VerificationToken[]
+}
+
+model PatientProfile {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime?
+  sex              String?
+  country          String    @default("NG")
+  state            String?
+  familyHistory    Json? // encrypted: relatives with breast/ovarian cancer
+  priorBiopsies    Boolean   @default(false)
+  menopauseStatus  String?
+  brcaStatus       String? // encrypted
+  currentSymptoms  Json? // encrypted
+  emergencyContact Json? // encrypted
+  updatedAt        DateTime  @updatedAt
+}
+
+model Scan {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  declaredType    ScanType    @default(UNKNOWN)
+  examDate        DateTime?
+  notes           String? // encrypted
+  symptoms        String? // encrypted JSON array of symptoms reported with this upload
+  clinicalDetails String? // encrypted JSON: patient ref, age, grade, ER/PR/HER2/Ki-67, diagnosis
+  classification  String      @default("UNDETERMINED") // rule-based surrogate subtype
+  patientRefHash  String? // keyed hash of the normalised patient ID, for exact-match search
+  storageKey      String // object key in private bucket, never a public URL
+  mimeType        String
+  sizeBytes       Int
+  sha256          String
+  status          ScanStatus  @default(UPLOADED)
+  failureReason   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now()) @updatedAt
+  analysis        Analysis?
+  shareLinks      ShareLink[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([userId, patientRefHash])
+}
+
+model Analysis {
+  id               String     @id @default(uuid())
+  scanId           String     @unique
+  scan             Scan       @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  detectedType     ScanType
+  imageQuality     String
+  riskLevel        RiskLevel? // legacy patient-screening field
+  aiSubtype        String     @default("UNDETERMINED")
+  aiReasoning      String     @default("")
+  aiConflict       Boolean    @default(false) // AI says the file contradicts the entered receptors
+  morphology       Json? // H&E morphology read by the AI (tumour, type, Nottingham components)
+  biradsEstimate   String?
+  keyFindings      Json
+  detailedAnalysis String
+  plainSummary     String
+  nextSteps        Json
+  limitations      String
+  rawResponse      String // encrypted, full model output for audit
+  safetyFlags      String[] // which code-side safety rules changed the model output
+  model            String // e.g. gemini model id used
+  promptVersion    String // e.g. "v1.0"
+  latencyMs        Int
+  inputTokens      Int?
+  outputTokens     Int?
+  createdAt        DateTime   @default(now())
+  feedback         Feedback?
+}
+
+model ShareLink {
+  id             String    @id @default(uuid())
+  scanId         String
+  scan           Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  tokenHash      String    @unique
+  pinHash        String?
+  pinFailedCount Int       @default(0)
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  viewCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+}
+
+model Consent {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ConsentType
+  version   String
+  granted   Boolean
+  ipAddress String?
+  createdAt DateTime    @default(now())
+
+  @@index([userId, type, createdAt])
+}
+
+model Session {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshHash String    @unique
+  userAgent   String?
+  ipAddress   String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model VerificationToken {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   TokenPurpose
+  tokenHash String
+  attempts  Int          @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime     @default(now())
+
+  @@index([tokenHash])
+  @@index([userId, purpose])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Feedback {
+  id           String   @id @default(uuid())
+  analysisId   String   @unique
+  analysis     Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  helpful      Boolean
+  doctorAgreed Boolean? // patient reports what her doctor said later
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // e.g. SCAN_UPLOADED, RESULT_VIEWED, SHARE_CREATED, DATA_EXPORTED
+  entityType String?
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model ScreeningCentre {
+  id       String   @id @default(uuid())
+  name     String
+  state    String
+  city     String
+  address  String
+  phone    String?
+  services String[] // MAMMOGRAM, ULTRASOUND, BIOPSY
+  isActive Boolean  @default(true)
+
+  @@index([state])
+}

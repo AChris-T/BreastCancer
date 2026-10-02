@@ -1,0 +1,49 @@
+name: breastscan
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: breastscan
+      POSTGRES_PASSWORD: breastscan_dev
+      POSTGRES_DB: breastscan
+    ports:
+      # Host 5433 so it does not clash with a locally installed PostgreSQL on 5432
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U breastscan -d breastscan']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Malware scanner for uploads. Optional locally; required in production.
+  # Start with: docker compose --profile scan up -d   (first start downloads signatures, ~1-2 min)
+  clamav:
+    image: clamav/clamav:stable
+    profiles: [scan]
+    restart: unless-stopped
+    ports:
+      - '3310:3310'
+    volumes:
+      - clamav_data:/var/lib/clamav
+
+volumes:
+  postgres_data:
+  redis_data:
+  clamav_data:

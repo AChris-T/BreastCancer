@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "PatientProfile" ALTER COLUMN "dateOfBirth" DROP NOT NULL,
+ALTER COLUMN "sex" DROP NOT NULL;

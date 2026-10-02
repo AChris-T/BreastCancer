@@ -1,0 +1,24 @@
+{
+  "name": "breastscan",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:migrate": "npm run db:migrate -w @breastscan/api",
+    "db:deploy": "npm run db:deploy -w @breastscan/api",
+    "db:seed": "npm run db:seed -w @breastscan/api",
+    "db:studio": "npm run db:studio -w @breastscan/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.5"
+  }
+}

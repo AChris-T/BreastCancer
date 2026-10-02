@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# env files hold secrets; commit only the .example versions
+.env
+.env.*
+!.env.example
+
+# generated Prisma client
+apps/api/src/generated/
+apps/api/.storage/
+backups/
