@@ -23,7 +23,7 @@ describe('validateEnv', () => {
   });
 
   it('refuses unsafe production settings', () => {
-    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).toThrow(/AI_PROVIDER=mock[\s\S]*STORAGE_DRIVER=s3/);
+    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).toThrow(/AI_PROVIDER=mock[\s\S]*STORAGE_DRIVER=s3[\s\S]*REDIS_URL/);
   });
 
   it('accepts a production configuration without optional scan/email settings', () => {
@@ -33,6 +33,7 @@ describe('validateEnv', () => {
       GEMINI_API_KEY: 'k',
       STORAGE_DRIVER: 's3',
       S3_BUCKET: 'scans',
+      REDIS_URL: 'redis://redis.internal:6379',
     });
     expect(env.RUN_WORKER).toBe(false);
     expect(env.SWAGGER_ENABLED).toBe(false);
@@ -47,6 +48,7 @@ describe('validateEnv', () => {
       GEMINI_API_KEY: 'k',
       STORAGE_DRIVER: 's3',
       S3_BUCKET: 'scans',
+      REDIS_URL: 'redis://redis.internal:6379',
       CLAMAV_HOST: 'clamav',
       RESEND_API_KEY: 're_x',
     });

@@ -67,6 +67,8 @@ export const envSchema = z
     if (env.NODE_ENV === 'production') {
       if (env.AI_PROVIDER === 'mock') issue('AI_PROVIDER=mock is not allowed in production');
       if (env.STORAGE_DRIVER !== 's3') issue('Use STORAGE_DRIVER=s3 (a private bucket) in production');
+      if (/^rediss?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(env.REDIS_URL))
+        issue('REDIS_URL must point at your Redis service in production, not localhost');
     }
   });
 
