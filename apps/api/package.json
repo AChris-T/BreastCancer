@@ -28,6 +28,7 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "dev": "nest start --watch --preserveWatchOutput",
     "start:worker": "node dist/worker",
+    "admin:create": "node dist/scripts/create-admin.js",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
