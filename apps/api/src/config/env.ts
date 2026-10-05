@@ -4,12 +4,15 @@ const bool = z
   .enum(['true', 'false', '1', '0'])
   .transform((v) => v === 'true' || v === '1');
 
+const trimSlash = (url: string) => url.replace(/\/+$/, '');
+
 export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().default(3001),
-    FRONTEND_URL: z.url().default('http://localhost:3000'),
-    API_PUBLIC_URL: z.url().default('http://localhost:3001'),
+    // Trailing slashes are dropped: FRONTEND_URL is the CORS origin, which browsers send without one.
+    FRONTEND_URL: z.url().default('http://localhost:3000').transform(trimSlash),
+    API_PUBLIC_URL: z.url().default('http://localhost:3001').transform(trimSlash),
     TRUST_PROXY: bool.default(false),
     SWAGGER_ENABLED: bool.optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

@@ -18,6 +18,12 @@ describe('validateEnv', () => {
     expect(validateEnv({ ...base, GEMINI_API_KEY: 'k' }).AI_PROVIDER).toBe('gemini');
   });
 
+  it('drops trailing slashes from public URLs so the CORS origin matches', () => {
+    const env = validateEnv({ ...base, FRONTEND_URL: 'https://app.example.com/', API_PUBLIC_URL: 'https://api.example.com//' });
+    expect(env.FRONTEND_URL).toBe('https://app.example.com');
+    expect(env.API_PUBLIC_URL).toBe('https://api.example.com');
+  });
+
   it('rejects a key of the wrong length', () => {
     expect(() => validateEnv({ ...base, FIELD_ENCRYPTION_KEY: 'c2hvcnQ=' })).toThrow(/32 bytes/);
   });
