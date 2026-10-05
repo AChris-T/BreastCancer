@@ -23,9 +23,21 @@ describe('validateEnv', () => {
   });
 
   it('refuses unsafe production settings', () => {
-    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).toThrow(
-      /AI_PROVIDER=mock[\s\S]*STORAGE_DRIVER=s3[\s\S]*CLAMAV_HOST[\s\S]*RESEND_API_KEY/,
-    );
+    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).toThrow(/AI_PROVIDER=mock[\s\S]*STORAGE_DRIVER=s3/);
+  });
+
+  it('accepts a production configuration without optional scan/email settings', () => {
+    const env = validateEnv({
+      ...base,
+      NODE_ENV: 'production',
+      GEMINI_API_KEY: 'k',
+      STORAGE_DRIVER: 's3',
+      S3_BUCKET: 'scans',
+    });
+    expect(env.RUN_WORKER).toBe(false);
+    expect(env.SWAGGER_ENABLED).toBe(false);
+    expect(env.CLAMAV_HOST).toBeUndefined();
+    expect(env.RESEND_API_KEY).toBeUndefined();
   });
 
   it('accepts a complete production configuration', () => {

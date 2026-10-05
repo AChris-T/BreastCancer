@@ -27,7 +27,7 @@ npm run dev                       # web on :3000, API on :3001 (worker runs insi
 - **No API keys needed locally.** Without `GEMINI_API_KEY`, a clearly labelled mock AI is used (it echoes the rule-based class). Without `RESEND_API_KEY`, emails such as password-reset links are printed in the API log.
 - **API docs:** http://localhost:3001/api/docs
 - **Test login:** `test@breastscan.local` / `Test-Passw0rd!` (set by `SEED_TEST_EMAIL` / `SEED_TEST_PASSWORD` in `apps/api/.env`).
-- **Virus scanning:** to test it locally, run `docker compose --profile scan up -d` and set `CLAMAV_HOST=localhost`.
+- **Virus scanning:** to test it locally, run `docker compose --profile scan up -d` and set `CLAMAV_HOST=localhost`. If the variable is absent, the app starts and skips malware scanning with a warning rather than hard-failing.
 
 ## Commands
 

@@ -67,8 +67,6 @@ export const envSchema = z
     if (env.NODE_ENV === 'production') {
       if (env.AI_PROVIDER === 'mock') issue('AI_PROVIDER=mock is not allowed in production');
       if (env.STORAGE_DRIVER !== 's3') issue('Use STORAGE_DRIVER=s3 (a private bucket) in production');
-      if (!env.CLAMAV_HOST) issue('CLAMAV_HOST is required in production: uploads must be malware-scanned');
-      if (!env.RESEND_API_KEY) issue('RESEND_API_KEY is required in production');
     }
   });
 

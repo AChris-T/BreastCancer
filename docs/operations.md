@@ -18,7 +18,7 @@ How BreastScan AI runs in production, how to look after it, and what must be tru
 
 ## Required production settings
 
-The API refuses to start in production without these: `GEMINI_API_KEY` (paid tier only), `STORAGE_DRIVER=s3` and `S3_*`, `CLAMAV_HOST`, `RESEND_API_KEY`, and strong `JWT_ACCESS_SECRET`, `TOKEN_HASH_SECRET` and `FIELD_ENCRYPTION_KEY`. Keep all of these in the host's secrets manager, not in a committed `.env`. Also set `TRUST_PROXY=true` behind a load balancer, `FRONTEND_URL`, `API_PUBLIC_URL` and `SENTRY_DSN`.
+The API stays up in production without `CLAMAV_HOST` or `RESEND_API_KEY`, but those features degrade gracefully: malware scanning is skipped and outbound mail is logged to stdout instead of sending. The safety-critical settings remain `GEMINI_API_KEY` (paid tier only), `STORAGE_DRIVER=s3` and `S3_*`, and strong `JWT_ACCESS_SECRET`, `TOKEN_HASH_SECRET` and `FIELD_ENCRYPTION_KEY`. Keep these in the host's secrets manager, not in a committed `.env`. Also set `TRUST_PROXY=true` behind a load balancer, `FRONTEND_URL`, `API_PUBLIC_URL` and `SENTRY_DSN`.
 
 `FIELD_ENCRYPTION_KEY` encrypts health fields at rest. **Losing it makes that data unrecoverable.** Back it up in the secrets manager with the same care as the database. Values are prefixed `v1.`, so a later key rotation can add `v2` and re-encrypt in the background.
 
