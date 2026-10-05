@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-// Needs Postgres and Redis from docker-compose.yml. Uses its own database
-// (breastscan_test) and queue prefix, so it never touches development data.
+// Needs Postgres from docker-compose.yml. Uses its own database
+// (breastscan_test), so it never touches development data.
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {

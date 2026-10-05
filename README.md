@@ -5,7 +5,7 @@ Breast cancer subtype classification for clinicians. A doctor enters a case (pat
 | Workspace | What it is |
 |---|---|
 | `apps/web` | Next.js 16 (App Router), Tailwind 4, TanStack Query, React Hook Form + Zod |
-| `apps/api` | NestJS 12 API **and** background worker, Prisma 7 + PostgreSQL, BullMQ + Redis, Gemini |
+| `apps/api` | NestJS 12 API **and** background worker, Prisma 7 + PostgreSQL, Gemini |
 | `packages/shared` | Types, enums, Zod schemas and legal text shared by both apps |
 
 Turborepo runs tasks across the workspaces. `docs/operations.md` covers deployment, backups, the incident runbook and the launch gate.
@@ -15,7 +15,7 @@ Turborepo runs tasks across the workspaces. `docs/operations.md` covers deployme
 You need Node 24 and Docker Desktop.
 
 ```sh
-docker compose up -d              # Postgres (host port 5433) + Redis
+docker compose up -d              # Postgres (host port 5433)
 npm install
 cp apps/api/.env.example apps/api/.env       # then generate fresh secrets (see comments in the file)
 cp apps/web/.env.example apps/web/.env.local

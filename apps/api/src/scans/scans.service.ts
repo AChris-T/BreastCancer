@@ -1,4 +1,3 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   ConflictException,
@@ -8,7 +7,6 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import type { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import {
   classify,
@@ -21,7 +19,6 @@ import {
   type Subtype,
 } from '@breastscan/shared';
 import { toAnalysisView } from '../analysis/analysis.view.js';
-import { ANALYSIS_QUEUE, ANALYZE_JOB_OPTIONS, ANALYZE_SCAN_JOB, analysisJobId, type AnalyzeScanJob } from '../analysis/queue.js';
 import { AuditService } from '../audit/audit.service.js';
 import { CryptoService } from '../common/crypto.service.js';
 import { CodedException } from '../common/errors.js';
@@ -47,7 +44,6 @@ export class ScansService {
     private readonly scanner: MalwareScanner,
     private readonly audit: AuditService,
     private readonly config: AppConfig,
-    @InjectQueue(ANALYSIS_QUEUE) private readonly queue: Queue<AnalyzeScanJob>,
   ) {}
 
   async upload(userId: string, file: Express.Multer.File | undefined, dto: UploadScanDto, context: RequestContext): Promise<ScanDetail> {
@@ -205,21 +201,12 @@ export class ScansService {
     return { helpful: feedback.helpful, doctorAgreed: feedback.doctorAgreed, comment: feedback.comment };
   }
 
-  private async enqueue(scan: Scan): Promise<Scan> {
-    try {
-      const queued = await this.prisma.scan.update({
-        where: { id: scan.id },
-        data: { status: ScanStatus.QUEUED, failureReason: null },
-      });
-      await this.queue.add(ANALYZE_SCAN_JOB, { scanId: scan.id }, { ...ANALYZE_JOB_OPTIONS, jobId: analysisJobId(scan.id) });
-      return queued;
-    } catch (error) {
-      this.logger.error({ err: error, scanId: scan.id }, 'Could not queue analysis');
-      return this.prisma.scan.update({
-        where: { id: scan.id },
-        data: { status: ScanStatus.FAILED, failureReason: 'We could not start the analysis. Please try again.' },
-      });
-    }
+  /** The worker (AnalysisProcessor) picks up QUEUED scans from the database. */
+  private enqueue(scan: Scan): Promise<Scan> {
+    return this.prisma.scan.update({
+      where: { id: scan.id },
+      data: { status: ScanStatus.QUEUED, failureReason: null },
+    });
   }
 
   private async assertCanUpload(userId: string) {

@@ -6,7 +6,6 @@ const testDb = (process.env.DATABASE_URL_TEST ??
 Object.assign(process.env, {
   NODE_ENV: 'test',
   DATABASE_URL: testDb,
-  QUEUE_PREFIX: 'bstest',
   RUN_WORKER: 'true',
   AI_PROVIDER: 'mock',
   STORAGE_DRIVER: 'local',

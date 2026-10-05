@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { AuditModule } from './audit/audit.service.js';
@@ -8,18 +7,6 @@ import { redactUrl } from './instrument.js';
 import { MailModule } from './mail/mail.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { StorageModule } from './storage/storage.service.js';
-
-export function redisConnection(url: string) {
-  const parsed = new URL(url);
-  return {
-    host: parsed.hostname,
-    port: Number(parsed.port || 6379),
-    username: parsed.username || undefined,
-    password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
-    db: parsed.pathname.length > 1 ? Number(parsed.pathname.slice(1)) : undefined,
-    tls: parsed.protocol === 'rediss:' ? {} : undefined,
-  };
-}
 
 /** Infrastructure shared by the API and the worker. */
 @Module({
@@ -47,13 +34,6 @@ export function redisConnection(url: string) {
     AuditModule,
     MailModule,
     StorageModule,
-    BullModule.forRootAsync({
-      inject: [AppConfig],
-      useFactory: (config: AppConfig) => ({
-        connection: redisConnection(config.get('REDIS_URL')),
-        prefix: config.get('QUEUE_PREFIX'),
-      }),
-    }),
   ],
 })
 export class CoreModule {}

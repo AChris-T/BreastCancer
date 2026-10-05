@@ -4,7 +4,7 @@ import { AiProvider, GeminiProvider, MockAiProvider } from './ai-provider.js';
 import { AnalysisProcessor } from './analysis.processor.js';
 import { AnalysisRunner } from './analysis.runner.js';
 
-/** Consumer side of the analysis queue. Only this module talks to Gemini. */
+/** Consumer side of the Postgres-backed analysis queue. Only this module talks to Gemini. */
 @Module({
   providers: [
     {

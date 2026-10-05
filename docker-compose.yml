@@ -19,19 +19,6 @@ services:
       timeout: 3s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   # Malware scanner for uploads. Optional locally; required in production.
   # Start with: docker compose --profile scan up -d   (first start downloads signatures, ~1-2 min)
   clamav:
@@ -45,5 +32,4 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
   clamav_data:

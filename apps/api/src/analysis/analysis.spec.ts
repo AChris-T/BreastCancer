@@ -1,6 +1,6 @@
 import { parseModelOutput } from './analysis.runner.js';
 import { buildUserPrompt } from './prompts/v2.js';
-import { ANALYZE_JOB_OPTIONS, retryDelay } from './queue.js';
+import { MAX_ATTEMPTS, retryDelay } from './queue.js';
 
 const valid = {
   upload_type: 'PATHOLOGY',
@@ -36,7 +36,7 @@ describe('parseModelOutput', () => {
 describe('retry schedule', () => {
   it('waits 10 s, 60 s and 5 min between attempts', () => {
     expect([1, 2, 3].map(retryDelay)).toEqual([10_000, 60_000, 300_000]);
-    expect(ANALYZE_JOB_OPTIONS.attempts).toBe(4);
+    expect(MAX_ATTEMPTS).toBe(4);
   });
 });
 

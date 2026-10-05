@@ -8,9 +8,8 @@ How BreastScan AI runs in production, how to look after it, and what must be tru
 |---|---|---|
 | Web (Next.js) | `npm run build -w @breastscan/web` then `next start` | Vercel or any Node host. Set `NEXT_PUBLIC_API_URL` at build time. |
 | API (NestJS) | `node apps/api/dist/main` | Set `RUN_WORKER=false` so it never processes jobs. |
-| Worker | `node apps/api/dist/worker` | Consumes the `analysis` queue and runs scheduled jobs. The only process that calls Gemini. Scale horizontally if the queue backs up. |
+| Worker | `node apps/api/dist/worker` | Picks up scans with status `QUEUED` from Postgres (polled every 2 s, claimed atomically, so several workers are safe) and runs scheduled jobs. The only process that calls Gemini. Scale horizontally if the queue backs up. |
 | PostgreSQL 16 | managed | Run `npm run db:deploy` on every release, before starting the new API. |
-| Redis 7 | managed | Queue and job state. Not a source of truth; losing it only loses in-flight jobs (scans stuck in QUEUED are failed after 30 min and can be retried). |
 | ClamAV | `clamav/clamav:stable` | Must be reachable from the API at `CLAMAV_HOST:3310`. Uploads fail closed if it is down. |
 | Object storage | S3 or Cloudflare R2 | Private bucket, no public access, default encryption on. Add the bucket host to the web app's `FILE_ORIGINS`. |
 
@@ -74,7 +73,7 @@ No real patient image may reach the system until every box is ticked.
 - [ ] ClamAV reachable from the API, and an EICAR upload is rejected in staging
 - [ ] Daily encrypted backups running and a restore check done
 - [ ] Sentry receiving events from the API and worker; add `@sentry/nextjs` to the web app (not wired up yet); uptime check on `/api/v1/health`
-- [ ] Rate-limit storage moved to Redis if running more than one API instance (it is in-memory per instance now)
+- [ ] Shared rate-limit storage if running more than one API instance (it is in-memory per instance now)
 - [ ] `npm audit` reviewed, Dependabot on, and a penetration test done
 - [ ] Data processing agreement in place with each hospital whose patient data is entered
 - [ ] The seeded test account removed (never run `db:seed` in production)
